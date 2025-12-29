@@ -35,10 +35,37 @@
             text-align: center;
             pointer-events: none;
         }
+
+        .nav {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 11px;
+            z-index: 1000;
+        }
+
+        .nav a {
+            color: rgba(100, 200, 255, 0.5);
+            text-decoration: none;
+            padding: 8px 12px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .nav a:hover {
+            color: rgba(100, 200, 255, 0.9);
+            border-color: rgba(100, 200, 255, 0.6);
+            background: rgba(100, 200, 255, 0.1);
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
+    <div class="nav">
+        <a href="nightmare.html">enter the nightmare →</a>
+    </div>
     <div class="info">
         Click anywhere to plant a seed of thought<br>
         Watch connections emerge and grow
