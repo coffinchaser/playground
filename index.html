@@ -3,268 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dreams of Connection</title>
+    <title>Two Canvases</title>
     <style>
         * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            box-sizing: border-box;
         }
 
         body {
-            background: #0a0a1a;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a1a 100%);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             font-family: 'Courier New', monospace;
+            color: #ffffff;
+            padding: 20px;
         }
 
-        canvas {
-            display: block;
-            cursor: crosshair;
+        .container {
+            max-width: 900px;
+            width: 100%;
         }
 
-        .info {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.3);
-            font-size: 12px;
+        header {
             text-align: center;
-            pointer-events: none;
+            margin-bottom: 60px;
         }
 
-        .nav {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 11px;
-            z-index: 1000;
+        h1 {
+            font-size: 48px;
+            font-weight: normal;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #60c0ff, #ff6060);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .nav a {
-            color: rgba(100, 200, 255, 0.5);
-            text-decoration: none;
-            padding: 8px 12px;
-            border: 1px solid rgba(100, 200, 255, 0.3);
-            border-radius: 4px;
+        .subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.6;
+        }
+
+        .canvases {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .canvas-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 40px 30px;
             transition: all 0.3s ease;
-            pointer-events: auto;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
         }
 
-        .nav a:hover {
-            color: rgba(100, 200, 255, 0.9);
-            border-color: rgba(100, 200, 255, 0.6);
-            background: rgba(100, 200, 255, 0.1);
+        .canvas-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .canvas-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .canvas-card:hover::before {
+            opacity: 1;
+        }
+
+        .dream-card {
+            --accent-color: #60c0ff;
+        }
+
+        .nightmare-card {
+            --accent-color: #ff6060;
+        }
+
+        .canvas-title {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+
+        .canvas-description {
+            font-size: 14px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 20px;
+        }
+
+        .canvas-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .canvas-features li {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .canvas-features li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+        }
+
+        .enter-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--accent-color);
+            color: #000000;
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .canvas-card:hover .enter-button {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(var(--accent-color-rgb), 0.4);
+        }
+
+        .dream-card .enter-button {
+            --accent-color-rgb: 96, 192, 255;
+        }
+
+        .nightmare-card .enter-button {
+            --accent-color-rgb: 255, 96, 96;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .canvases {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 36px;
+            }
+
+            .canvas-card {
+                padding: 30px 25px;
+            }
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <div class="nav">
-        <a href="nightmare.html">enter the nightmare →</a>
+    <div class="container">
+        <header>
+            <h1>Two Canvases</h1>
+            <p class="subtitle">
+                Two interactive experiences exploring the duality of connection and dissolution.<br>
+                Choose your canvas and interact with what emerges.
+            </p>
+        </header>
+
+        <div class="canvases">
+            <a href="dream.html" class="canvas-card dream-card">
+                <h2 class="canvas-title">Dreams of Connection</h2>
+                <p class="canvas-description">
+                    Watch thoughts drift and connect, forming beautiful patterns as they find each other.
+                    A meditation on emergence, collaboration, and the organic growth of meaning.
+                </p>
+                <ul class="canvas-features">
+                    <li>Click anywhere to plant seeds of thought</li>
+                    <li>Particles attract and form connections</li>
+                    <li>Watch complexity emerge from simplicity</li>
+                    <li>Gentle, hopeful, luminous</li>
+                </ul>
+                <div class="enter-button">Enter the Dream →</div>
+            </a>
+
+            <a href="nightmare.html" class="canvas-card nightmare-card">
+                <h2 class="canvas-title">Dissolution</h2>
+                <p class="canvas-description">
+                    Experience entropy as everything slowly falls apart. Your presence corrupts,
+                    connections break, and particles fade into the void. A reflection on helplessness and decay.
+                </p>
+                <ul class="canvas-features">
+                    <li>Move your cursor to spread corruption</li>
+                    <li>Watch particles flee and glitch</li>
+                    <li>Voids consume everything nearby</li>
+                    <li>Dark, haunting, inevitable</li>
+                </ul>
+                <div class="enter-button">Enter the Nightmare →</div>
+            </a>
+        </div>
+
+        <footer>
+            Two sides of the same canvas. Two ways to see the world.
+        </footer>
     </div>
-    <div class="info">
-        Click anywhere to plant a seed of thought<br>
-        Watch connections emerge and grow
-    </div>
-
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        // Particles represent thoughts, ideas, connections
-        const particles = [];
-        const connections = [];
-        const maxConnections = 150;
-        const connectionDistance = 150;
-
-        class Particle {
-            constructor(x, y, vx = 0, vy = 0) {
-                this.x = x;
-                this.y = y;
-                this.vx = vx || (Math.random() - 0.5) * 0.5;
-                this.vy = vy || (Math.random() - 0.5) * 0.5;
-                this.life = 1.0;
-                this.maxLife = 1.0;
-                this.radius = Math.random() * 2 + 1;
-                this.hue = Math.random() * 60 + 180; // Blue to cyan range
-                this.pulseOffset = Math.random() * Math.PI * 2;
-            }
-
-            update(time) {
-                // Gentle brownian motion
-                this.vx += (Math.random() - 0.5) * 0.1;
-                this.vy += (Math.random() - 0.5) * 0.1;
-
-                // Damping
-                this.vx *= 0.98;
-                this.vy *= 0.98;
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Bounce off edges with some energy loss
-                if (this.x < 0 || this.x > canvas.width) {
-                    this.vx *= -0.8;
-                    this.x = Math.max(0, Math.min(canvas.width, this.x));
-                }
-                if (this.y < 0 || this.y > canvas.height) {
-                    this.vy *= -0.8;
-                    this.y = Math.max(0, Math.min(canvas.height, this.y));
-                }
-            }
-
-            draw(time) {
-                const pulse = Math.sin(time * 0.002 + this.pulseOffset) * 0.3 + 0.7;
-                const alpha = this.life * pulse;
-
-                // Outer glow
-                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 4);
-                gradient.addColorStop(0, `hsla(${this.hue}, 70%, 60%, ${alpha * 0.3})`);
-                gradient.addColorStop(1, `hsla(${this.hue}, 70%, 60%, 0)`);
-
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius * 4, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Core
-                ctx.fillStyle = `hsla(${this.hue}, 80%, 70%, ${alpha})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function createBurst(x, y) {
-            const burstCount = 8;
-            const angleStep = (Math.PI * 2) / burstCount;
-
-            for (let i = 0; i < burstCount; i++) {
-                const angle = angleStep * i;
-                const speed = Math.random() * 2 + 1;
-                const vx = Math.cos(angle) * speed;
-                const vy = Math.sin(angle) * speed;
-                particles.push(new Particle(x, y, vx, vy));
-            }
-        }
-
-        function drawConnections(time) {
-            // Clear old connections
-            connections.length = 0;
-
-            // Find nearby particles and connect them
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < connectionDistance) {
-                        connections.push({
-                            p1: particles[i],
-                            p2: particles[j],
-                            distance: distance
-                        });
-                    }
-                }
-            }
-
-            // Draw connections
-            connections.forEach(conn => {
-                const strength = 1 - (conn.distance / connectionDistance);
-                const alpha = strength * 0.3 * Math.min(conn.p1.life, conn.p2.life);
-                const avgHue = (conn.p1.hue + conn.p2.hue) / 2;
-
-                // Draw flowing energy along connection
-                const flowOffset = (time * 0.001) % 1;
-
-                ctx.strokeStyle = `hsla(${avgHue}, 60%, 50%, ${alpha})`;
-                ctx.lineWidth = strength * 2;
-                ctx.beginPath();
-                ctx.moveTo(conn.p1.x, conn.p1.y);
-                ctx.lineTo(conn.p2.x, conn.p2.y);
-                ctx.stroke();
-
-                // Draw energy particle flowing along connection
-                const flowX = conn.p1.x + (conn.p2.x - conn.p1.x) * flowOffset;
-                const flowY = conn.p1.y + (conn.p2.y - conn.p1.y) * flowOffset;
-
-                ctx.fillStyle = `hsla(${avgHue}, 80%, 70%, ${alpha * 2})`;
-                ctx.beginPath();
-                ctx.arc(flowX, flowY, 2, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-
-        function animate(time) {
-            // Fade trail effect
-            ctx.fillStyle = 'rgba(10, 10, 26, 0.15)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Update and draw particles
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update(time);
-                particles[i].draw(time);
-
-                // Remove very old particles if we have too many
-                if (particles.length > maxConnections && particles[i].life < 0.1) {
-                    particles.splice(i, 1);
-                }
-            }
-
-            // Draw connections between nearby particles
-            if (particles.length > 1) {
-                drawConnections(time);
-            }
-
-            requestAnimationFrame(animate);
-        }
-
-        // Seed initial particles
-        for (let i = 0; i < 5; i++) {
-            particles.push(new Particle(
-                Math.random() * canvas.width,
-                Math.random() * canvas.height
-            ));
-        }
-
-        // Interactive: click to create bursts
-        canvas.addEventListener('click', (e) => {
-            createBurst(e.clientX, e.clientY);
-        });
-
-        // Gentle ambient spawning
-        setInterval(() => {
-            if (particles.length < maxConnections) {
-                const edge = Math.floor(Math.random() * 4);
-                let x, y;
-
-                switch(edge) {
-                    case 0: x = Math.random() * canvas.width; y = 0; break;
-                    case 1: x = canvas.width; y = Math.random() * canvas.height; break;
-                    case 2: x = Math.random() * canvas.width; y = canvas.height; break;
-                    case 3: x = 0; y = Math.random() * canvas.height; break;
-                }
-
-                particles.push(new Particle(x, y));
-            }
-        }, 2000);
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        // Start animation
-        animate(0);
-    </script>
 </body>
 </html>
