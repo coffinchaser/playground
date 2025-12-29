@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dissolution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+        }
+
+        canvas {
+            display: block;
+            cursor: none;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 0, 0, 0.2);
+            font-size: 12px;
+            text-align: center;
+            pointer-events: none;
+            animation: flicker 3s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.4; }
+            25%, 75% { opacity: 0.1; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="info">
+        move your cursor<br>
+        watch everything fall apart
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const voids = [];
+        const maxParticles = 200;
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        let corruptionLevel = 0;
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.originalX = x;
+                this.originalY = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.life = 1.0;
+                this.radius = Math.random() * 3 + 1;
+                this.hue = 0; // Red spectrum
+                this.corrupted = false;
+                this.decayRate = Math.random() * 0.0005 + 0.0002;
+                this.glitchOffset = Math.random() * 1000;
+            }
+
+            update(time, mouseX, mouseY, voids) {
+                // Life decays over time
+                this.life -= this.decayRate;
+
+                // Distance from mouse causes distortion and repulsion
+                const dx = this.x - mouseX;
+                const dy = this.y - mouseY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 200) {
+                    // Flee from cursor with increasing panic
+                    const force = (200 - dist) / 200;
+                    const angle = Math.atan2(dy, dx);
+                    this.vx += Math.cos(angle) * force * 0.5;
+                    this.vy += Math.sin(angle) * force * 0.5;
+
+                    // Corruption spreads near cursor
+                    if (dist < 100 && Math.random() < 0.05) {
+                        this.corrupted = true;
+                    }
+                }
+
+                // Voids pull particles in and destroy them
+                voids.forEach(void_obj => {
+                    const vdx = this.x - void_obj.x;
+                    const vdy = this.y - void_obj.y;
+                    const vdist = Math.sqrt(vdx * vdx + vdy * vdy);
+
+                    if (vdist < void_obj.radius) {
+                        const pull = (void_obj.radius - vdist) / void_obj.radius;
+                        const angle = Math.atan2(-vdy, -vdx);
+                        this.vx += Math.cos(angle) * pull * 0.8;
+                        this.vy += Math.sin(angle) * pull * 0.8;
+                        this.life -= 0.02;
+                        this.corrupted = true;
+                    }
+                });
+
+                // Corrupted particles behave erratically
+                if (this.corrupted) {
+                    this.vx += (Math.random() - 0.5) * 0.5;
+                    this.vy += (Math.random() - 0.5) * 0.5;
+                    this.life -= 0.005;
+
+                    // Glitch effect
+                    if (Math.random() < 0.1) {
+                        this.x += (Math.random() - 0.5) * 20;
+                        this.y += (Math.random() - 0.5) * 20;
+                    }
+                }
+
+                // Friction
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Particles that escape bounds are lost forever
+                if (this.x < -50 || this.x > canvas.width + 50 ||
+                    this.y < -50 || this.y > canvas.height + 50) {
+                    this.life = 0;
+                }
+            }
+
+            draw(time) {
+                if (this.life <= 0) return;
+
+                const alpha = this.life;
+                let displayX = this.x;
+                let displayY = this.y;
+
+                // Glitch effect for corrupted particles
+                if (this.corrupted) {
+                    const glitch = Math.sin(time * 0.01 + this.glitchOffset);
+                    if (glitch > 0.95) {
+                        displayX += (Math.random() - 0.5) * 30;
+                        displayY += (Math.random() - 0.5) * 30;
+                    }
+                }
+
+                // Color shifts based on corruption and life
+                const hueShift = this.corrupted ? 120 : 0; // Corrupted = sickly green
+                const hue = this.hue + hueShift + (1 - this.life) * 40;
+
+                // Distorted glow
+                const gradient = ctx.createRadialGradient(displayX, displayY, 0, displayX, displayY, this.radius * 5);
+                gradient.addColorStop(0, `hsla(${hue}, 100%, 40%, ${alpha * 0.4})`);
+                gradient.addColorStop(1, `hsla(${hue}, 100%, 20%, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(displayX, displayY, this.radius * 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Core
+                ctx.fillStyle = `hsla(${hue}, 90%, ${this.corrupted ? 30 : 50}%, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(displayX, displayY, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw decay trails for corrupted particles
+                if (this.corrupted && Math.random() < 0.3) {
+                    ctx.strokeStyle = `hsla(${hue}, 70%, 30%, ${alpha * 0.2})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(displayX, displayY);
+                    ctx.lineTo(displayX - this.vx * 5, displayY - this.vy * 5);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        class Void {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.maxRadius = Math.random() * 80 + 40;
+                this.growing = true;
+                this.life = 1.0;
+            }
+
+            update() {
+                if (this.growing) {
+                    this.radius += 2;
+                    if (this.radius >= this.maxRadius) {
+                        this.growing = false;
+                    }
+                } else {
+                    this.life -= 0.005;
+                    this.radius = this.maxRadius * this.life;
+                }
+            }
+
+            draw(time) {
+                if (this.life <= 0) return;
+
+                // Swirling void effect
+                const segments = 12;
+                for (let i = 0; i < segments; i++) {
+                    const angle = (i / segments) * Math.PI * 2 + time * 0.001;
+                    const nextAngle = ((i + 1) / segments) * Math.PI * 2 + time * 0.001;
+
+                    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+                    gradient.addColorStop(0, `rgba(0, 0, 0, ${this.life})`);
+                    gradient.addColorStop(0.5, `rgba(20, 0, 30, ${this.life * 0.6})`);
+                    gradient.addColorStop(1, `rgba(40, 0, 0, 0)`);
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.arc(this.x, this.y, this.radius, angle, nextAngle);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // Event horizon
+                ctx.strokeStyle = `rgba(80, 0, 100, ${this.life * 0.8})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 0.3, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        function spawnParticleCluster() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const count = Math.floor(Math.random() * 5) + 3;
+
+            for (let i = 0; i < count; i++) {
+                const offsetX = (Math.random() - 0.5) * 50;
+                const offsetY = (Math.random() - 0.5) * 50;
+                particles.push(new Particle(x + offsetX, y + offsetY));
+            }
+        }
+
+        function drawBrokenConnections(time) {
+            // Draw failing connections between particles
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    if (Math.random() > 0.95) continue; // Sparse, broken connections
+
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 100) {
+                        const alpha = (1 - distance / 100) * 0.1 * Math.min(particles[i].life, particles[j].life);
+
+                        // Broken, stuttering lines
+                        ctx.strokeStyle = `rgba(100, 0, 0, ${alpha})`;
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([5, 10]);
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+
+                        // Lines break and distort
+                        if (Math.random() < 0.3) {
+                            const midX = (particles[i].x + particles[j].x) / 2 + (Math.random() - 0.5) * 20;
+                            const midY = (particles[i].y + particles[j].y) / 2 + (Math.random() - 0.5) * 20;
+                            ctx.lineTo(midX, midY);
+                        }
+
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            }
+        }
+
+        function animate(time) {
+            // Decay effect - everything slowly fades to black
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Random corruption spreading
+            if (Math.random() < 0.002 * (1 + corruptionLevel)) {
+                voids.push(new Void(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+                corruptionLevel += 0.1;
+            }
+
+            // Update and draw voids
+            for (let i = voids.length - 1; i >= 0; i--) {
+                voids[i].update();
+                voids[i].draw(time);
+
+                if (voids[i].life <= 0) {
+                    voids.splice(i, 1);
+                }
+            }
+
+            // Draw broken connections
+            drawBrokenConnections(time);
+
+            // Update and draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update(time, mouseX, mouseY, voids);
+                particles[i].draw(time);
+
+                // Remove dead particles
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Screen corruption effect
+            if (corruptionLevel > 1 && Math.random() < 0.05) {
+                ctx.fillStyle = `rgba(${Math.random() * 50}, 0, 0, 0.05)`;
+                ctx.fillRect(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    Math.random() * 200,
+                    Math.random() * 100
+                );
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Spawn initial particles
+        for (let i = 0; i < 30; i++) {
+            spawnParticleCluster();
+        }
+
+        // Continuous spawning, but they always die
+        setInterval(() => {
+            if (particles.length < maxParticles) {
+                spawnParticleCluster();
+            }
+        }, 1500);
+
+        // Mouse tracking
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            // Cursor creates voids
+            if (Math.random() < 0.05) {
+                voids.push(new Void(mouseX, mouseY));
+            }
+        });
+
+        // Click creates catastrophic void
+        canvas.addEventListener('click', (e) => {
+            const catastrophicVoid = new Void(e.clientX, e.clientY);
+            catastrophicVoid.maxRadius = 150;
+            voids.push(catastrophicVoid);
+            corruptionLevel += 0.5;
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Start animation
+        animate(0);
+    </script>
+</body>
+</html>
